@@ -1,43 +1,44 @@
 #! /usr/bin/python
 #Goal: Download and format university course schedules
-#using beautifulsoup4
+#using beautifulsoup4 and requests
 from bs4 import BeautifulSoup
-#and requests
 import requests
-from requests.auth import HTTPBasicAuth
 
-#scrape HTML text from target URLs
-def getArticles():
+def scrape1():
+    ################
+    ##post request##
+    ################
     # Fill in your details here to be posted to the login form. 
-    #    headers = {'User-Agent': 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:55.0) Gecko/20100101 Firefox/55.0'}
+    login_url = 'https://paul.uni-paderborn.de/scripts/mgrqispi.dll'
+    payload = {'logIn_btn' : 'Anmelden' , 'APPNAME' : 'CampusNet' , 'PRGNAME' : 'LOGINCHECK' , 'usrname' : '********' , 'pass' : '********' , 'ARGUMENTS' : 'clino,usrname,pass,menuno,menu_type,browser,platform' , 'clino' : '000000000000001' , 'menuno' : '000435' , 'menu_type' : 'classic' , 'browser' : '' , 'platform' : '' }
 
-    # Use 'with' to ensure the session context is closed after use.
-    with requests.Session() as s:
-#        headers = {'User-Agent': 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:55.0) Gecko/20100101 Firefox/55.0'}
-        payload = { 'usrname' : '*****' , 'pass' : '****' , 'APPNAME' : 'CampusNet' , 'PRGNAME': 'LOGINCHECK',}
-        # print the html returned or something more intelligent to see if it's a successful login page.
-        p = s.post('https://paul.uni-paderborn.de/scripts/mgrqispi.dll' , data = payload, )
-#        print p.text
-        print p.status_code
-        soup = BeautifulSoup(p.text , 'html.parser')
-        print(soup.get_text())  #prints text from webpage
+    # Fill in header details from browser in order to no look like robot
+    headers = {'Host' : 'paul.uni-paderborn.de', 'Accept' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'Accept-Encoding' : 'gzip, deflate, br', 'Upgrade-Insecure-Requests' : '1', 'Accept-Language' : 'en-US,en;q=0.5' , 'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:55.0) Gecko/20100101 Firefox/55.0', 'Referer' : 'https://paul.uni-paderborn.de/scripts/mgrqispi.dll?APPNAME=CampusNet&PRGNAME=EXTERNALPAGES&ARGUMENTS=-N000000000000001,-N000435,-Awelcome', 'Content-Type' : 'application/x-www-form-urlencoded' }
 
-#        print p.headers
-#        print p.cookies
-#        print p.content
-#        print p.text
-        # authorised request1.
-#        r1 = requests.get('https://paul.uni-paderborn.de/scripts/mgrqispi.dll?APPNAME=CampusNet&PRGNAME=EXTERNALPAGES&ARGUMENTS=-N915670715903050,-N000455,-ASemesterverwaltung%20STUD%5Fmain')
-#        print r1.text
-#        print r1.status_code
-#        print r1.headers
-#        print r1.cookies
-#        rc1 = r1.content
-#        soup1 = BeautifulSoup(rc1, 'html.parser')
-#        print(soup1.prettify()) #prints beautiful soup formatted html text
-#        print(soup1.get_text())  #prints text from webpage
+    s = requests.Session()
 
+    p = s.post(login_url, data = payload, allow_redirects = True, headers=headers)
 
-#call HTML text scraping function
-getArticles()
+    ##extract url param authentication token##
+    encodedheader = p.headers['REFRESH']
+    sencodedheader = str(encodedheader)
 
+    split1,split2 = sencodedheader.split("S=")
+    #split2 is full authentication token (not always required)
+
+    split3,split4,split5 = split2.split(",")
+    #authentication is split into 3 variables for later use (because full token is not always required in url querys)
+    
+
+    ###############
+    ##get request##
+    ###############
+    url1 = 'https://paul.uni-paderborn.de/scripts/mgrqispi.dll?APPNAME=CampusNet&PRGNAME=STARTPAGE_DISPATCH&' + 'ARGUMENTS=' + split2
+    r = s.get(url1, headers=headers )
+
+    #to make sure url is correct# print r.url
+
+    #extract web page contents
+    soup = BeautifulSoup(r.text, 'html.parser')
+    print(soup.get_text())  #prints text from webpage
+scrape1()
